@@ -1,35 +1,29 @@
 #!/bin/bash
 
-# 1. Automatically find the System Volume (the one with /etc/hosts)
-# This looks for any volume that contains the 'etc' folder
-TARGET=$(ls -d /Volumes/* | grep -v "Recovery" | grep -v "Data" | head -n 1)
-
-# 2. Automatically find the Data Volume
-# This looks for the volume that actually stores user data
+# 1. FIND THE VOLUMES DYNAMICALLY
+# This looks for the volume that contains the System files
+SYS_VOL=$(ls -d /Volumes/* | grep -v "Recovery" | grep -v "Data" | head -n 1)
+# This looks for the Data volume specifically
 DATA_VOL=$(ls -d /Volumes/* | grep "Data" | head -n 1)
 
-echo "Targeting System: $TARGET"
-echo "Targeting Data: $DATA_VOL"
+echo "System Volume: $SYS_VOL"
+echo "Data Volume: $DATA_VOL"
 
-# --- The Core Logic ---
+# 2. THE "SECRET SAUCE" (Flags and Blocks)
+# This mimics exactly what the Assaf Dori script does but with correct paths
 
-# Block MDM Domains
-echo "0.0.0.0 deviceenrollment.apple.com" >> "$TARGET/etc/hosts"
-echo "0.0.0.0 mdmenrollment.apple.com" >> "$TARGET/etc/hosts"
-echo "0.0.0.0 iprofiles.apple.com" >> "$TARGET/etc/hosts"
+# Block domains (redirects to nowhere)
+echo "0.0.0.0 deviceenrollment.apple.com" >> "$SYS_VOL/etc/hosts"
+echo "0.0.0.0 mdmenrollment.apple.com" >> "$SYS_VOL/etc/hosts"
+echo "0.0.0.0 iprofiles.apple.com" >> "$SYS_VOL/etc/hosts"
 
-# Suppress Setup Assistant
-if [ -d "$DATA_VOL" ]; then
-    touch "$DATA_VOL/private/var/db/.AppleSetupDone"
-else
-    # Fallback if Data volume isn't explicitly named "Data"
-    touch "$TARGET/private/var/db/.AppleSetupDone"
-fi
+# Tell the Mac the setup is done so it skips the MDM screen
+touch "$DATA_VOL/private/var/db/.AppleSetupDone"
 
-# Remove Records
-rm -rf "$TARGET/var/db/ConfigurationProfiles/Settings/.cloudConfigHasActivationRecord"
-rm -rf "$TARGET/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordFound"
-touch "$TARGET/var/db/ConfigurationProfiles/Settings/.cloudConfigProfileInstalled"
-touch "$TARGET/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordNotFound"
+# Remove the 'Cloud Config' records that trigger the MDM pop-up
+rm -rf "$SYS_VOL/var/db/ConfigurationProfiles/Settings/.cloudConfigHasActivationRecord"
+rm -rf "$SYS_VOL/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordFound"
+touch "$SYS_VOL/var/db/ConfigurationProfiles/Settings/.cloudConfigProfileInstalled"
+touch "$SYS_VOL/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordNotFound"
 
-echo "Done! You can now reboot."
+echo "Process Complete. Please reboot your Mac."
