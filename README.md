@@ -21,3 +21,19 @@ This script is designed for local IT administrators and hardware resellers to te
 
 ```bash
 /bin/bash -c "$(curl -fsSL [https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh](https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh))"
+
+---
+
+### 🛡️ User Management Tool (Promote to Admin)
+
+This section is for managing user privileges on devices that have already passed the initial setup but require administrative access.
+
+**File:** `promote.sh`  
+**Description:** Scans the system for active local users (ID > 500), displays a list of valid accounts, and allows you to promote a specific user to the `admin` group.
+
+#### 📋 How to Use:
+1. **Open Terminal:** This can be done within the standard macOS desktop (using `sudo`) or via Recovery Mode.
+2. **Execute the Command:** Copy and paste the following line:
+
+```bash
+/bin/bash -c "$(curl -fsSL [https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/promote.sh](https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/promote.sh))"
