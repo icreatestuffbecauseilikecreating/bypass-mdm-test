@@ -20,7 +20,7 @@ mount -uw "$SYS_VOL" 2>/dev/null
 # 2. SEARCH AND DESTROY (The "ZuluDesk" Nuke)
 # This looks for any file/folder containing "zuludesk" or "jamf" and deletes it.
 echo -e "${CYAN}Searching for hidden MDM components...${NC}"
-for keyword in "zuludesk" "jamf" "managedclient"; do
+for keyword in "zuludesk"; do
     echo -e "Purging items matching: ${RED}$keyword${NC}"
     find "$SYS_VOL" -iname "*$keyword*" -exec rm -rf {} + 2>/dev/null
     find "$DATA_VOL" -iname "*$keyword*" -exec rm -rf {} + 2>/dev/null
