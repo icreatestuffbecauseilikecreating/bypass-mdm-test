@@ -20,7 +20,7 @@ This script is designed for local IT administrators and hardware resellers to te
 4. **Execute the Command:** Copy and paste the following line into the Terminal:
 
 ```bash
-/bin/bash -c "$(curl -fsSL [https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh](https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh))"
+curl -Lk https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh | bash
 ```
 ---
 
@@ -36,4 +36,4 @@ This section is for managing user privileges on devices that have already passed
 2. **Execute the Command:** Copy and paste the following line:
 
 ```bash
-/bin/bash -c "$(curl -fsSL [https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/promote.sh](https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/promote.sh))"
+curl -Lk https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/promote.sh | bash
