@@ -1,58 +1,84 @@
 #!/bin/bash
 
-# Color codes for the shop
-CYAN='\033[1;36m'
-GRN='\033[1;32m'
+# Define color codes
 RED='\033[1;31m'
+GRN='\033[1;32m'
+BLU='\033[1;34m'
+YEL='\033[1;33m'
+PUR='\033[1;35m'
+CYAN='\033[1;36m'
 NC='\033[0m'
 
-echo -e "${CYAN}--- Taheo Global MDM & ZuluDesk Purge ---${NC}"
+# Function to get the system volume name
+get_system_volume() {
+    system_volume=$(diskutil info / | grep "Device Node" | awk -F': ' '{print $2}' | xargs diskutil info | grep "Volume Name" | awk -F': ' '{print $2}' | tr -d ' ')
+    echo "$system_volume"
+}
 
-# Define paths
-SYS_VOL="/Volumes/Macintosh HD"
-DATA_VOL="/Volumes/Macintosh HD - Data"
+# Get the system volume name
+system_volume=$(get_system_volume)
 
-# 1. FORCE MOUNT (Ensures we can see the files)
-diskutil mount "$SYS_VOL"
-diskutil mount "$DATA_VOL"
-mount -uw "$SYS_VOL" 2>/dev/null
+# Display header
+echo -e "${CYAN}Bypass MDM${NC}"
+echo ""
 
-# 2. SEARCH AND DESTROY (The "ZuluDesk" Nuke)
-# This looks for any file/folder containing "zuludesk" or "jamf" and deletes it.
-echo -e "${CYAN}Searching for hidden MDM components...${NC}"
-for keyword in "zuludesk"; do
-    echo -e "Purging items matching: ${RED}$keyword${NC}"
-    find "$SYS_VOL" -iname "*$keyword*" -exec rm -rf {} + 2>/dev/null
-    find "$DATA_VOL" -iname "*$keyword*" -exec rm -rf {} + 2>/dev/null
+# Prompt user for choice
+PS3='Please enter your choice: '
+options=("Bypass MDM from Recovery" "Reboot & Exit")
+select opt in "${options[@]}"; do
+    case $opt in
+        "Bypass MDM from Recovery")
+            # Bypass MDM from Recovery
+            echo -e "${YEL}Bypass MDM from Recovery"
+            if [ -d "/Volumes/$system_volume - Data" ]; then
+                diskutil rename "$system_volume - Data" "Data"
+            fi
+
+            # Create Temporary User
+            echo -e "${NC}Create a Temporary User"
+            read -p "Enter Temporary Fullname (Default is 'Apple'): " realName
+            realName="${realName:=Apple}"
+            read -p "Enter Temporary Username (Default is 'Apple'): " username
+            username="${username:=Apple}"
+            read -p "Enter Temporary Password (Default is '1234'): " passw
+            passw="${passw:=1234}"
+
+            # Create User
+            dscl_path='/Volumes/Data/private/var/db/dslocal/nodes/Default'
+            echo -e "${GREEN}Creating User"
+            dscl -f "$dscl_path" localhost -create "/Local/Default/Users/$username"
+            dscl -f "$dscl_path" localhost -create "/Local/Default/Users/$username" UserShell "/bin/zsh"
+            dscl -f "$dscl_path" localhost -create "/Local/Default/Users/$username" RealName "$realName"
+            dscl -f "$dscl_path" localhost -create "/Local/Default/Users/$username" UniqueID "501"
+            dscl -f "$dscl_path" localhost -create "/Local/Default/Users/$username" PrimaryGroupID "20"
+            mkdir "/Volumes/Data/Users/$username"
+            dscl -f "$dscl_path" localhost -create "/Local/Default/Users/$username" NFSHomeDirectory "/Users/$username"
+            dscl -f "$dscl_path" localhost -passwd "/Local/Default/Users/$username" "$passw"
+            dscl -f "$dscl_path" localhost -append "/Local/Default/Groups/admin" GroupMembership $username
+
+            # Block MDM domains
+            echo "0.0.0.0 deviceenrollment.apple.com" >>/Volumes/"$system_volume"/etc/hosts
+            echo "0.0.0.0 mdmenrollment.apple.com" >>/Volumes/"$system_volume"/etc/hosts
+            echo "0.0.0.0 iprofiles.apple.com" >>/Volumes/"$system_volume"/etc/hosts
+            echo -e "${GRN}Successfully blocked MDM & Profile Domains"
+
+            # Remove configuration profiles
+            touch /Volumes/Data/private/var/db/.AppleSetupDone
+            rm -rf /Volumes/"$system_volume"/var/db/ConfigurationProfiles/Settings/.cloudConfigHasActivationRecord
+            rm -rf /Volumes/"$system_volume"/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordFound
+            touch /Volumes/"$system_volume"/var/db/ConfigurationProfiles/Settings/.cloudConfigProfileInstalled
+            touch /Volumes/"$system_volume"/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordNotFound
+
+            echo -e "${GRN}MDM enrollment has been bypassed!${NC}"
+            echo -e "${NC}Exit terminal and reboot your Mac.${NC}"
+            break
+            ;;
+        "Reboot & Exit")
+            # Reboot & Exit
+            echo "Rebooting..."
+            reboot
+            break
+            ;;
+        *) echo "Invalid option $REPLY" ;;
+    esac
 done
-
-# 3. DIRECT PURGE OF MDM DATABASES
-# Even if the name doesn't match, these folders hold the "lock"
-echo -e "${CYAN}Purging MDM database folders...${NC}"
-rm -rf "$SYS_VOL/var/db/ConfigurationProfiles"
-rm -rf "$SYS_VOL/Library/Managed Preferences"
-rm -rf "$DATA_VOL/Library/Managed Preferences"
-
-# Recreate the folder structure so the OS boots cleanly
-mkdir -p "$SYS_VOL/var/db/ConfigurationProfiles/Settings"
-
-# 4. THE BLOCK (Hosts file)
-echo -e "${CYAN}Applying Network Muzzle...${NC}"
-echo "0.0.0.0 deviceenrollment.apple.com" >> "$SYS_VOL/etc/hosts"
-echo "0.0.0.0 mdmenrollment.apple.com" >> "$SYS_VOL/etc/hosts"
-echo "0.0.0.0 iprofiles.apple.com" >> "$SYS_VOL/etc/hosts"
-echo "0.0.0.0 api.zuludesk.com" >> "$SYS_VOL/etc/hosts"
-
-# 5. THE SKIP (Setup Assistant)
-echo -e "${CYAN}Creating SetupDone flag...${NC}"
-mkdir -p "$DATA_VOL/private/var/db/"
-touch "$DATA_VOL/private/var/db/.AppleSetupDone"
-
-# 6. FAKE RECORDS (Stops the "Nag" notifications)
-touch "$SYS_VOL/var/db/ConfigurationProfiles/Settings/.cloudConfigProfileInstalled"
-touch "$SYS_VOL/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordNotFound"
-
-echo -e "---------------------------------------"
-echo -e "${GRN}PURGE COMPLETE!${NC}"
-echo -e "1. Reboot and ${RED}SKIP WI-FI${NC}."
-echo -e "2. Create your user account."
