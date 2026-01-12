@@ -20,7 +20,7 @@ This script is designed for local IT administrators and hardware resellers to te
 4. **Execute the Command:** Copy and paste the following line into the Terminal:
 
 ```bash
-curl -Lk https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh | bash
+curl -L https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh -o bypass.sh && sh bypass.sh
 ```
 ---
 
