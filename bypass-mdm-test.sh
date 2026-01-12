@@ -42,3 +42,40 @@ echo -e "${GRN}SUCCESS!${NC}"
 echo -e "1. Exit Terminal and Reboot."
 echo -e "2. ${RED}DO NOT CONNECT TO WI-FI${NC} until you reach the desktop."
 echo -e "3. Create your local user account normally."
+
+#!/bin/bash
+
+SYS_VOL="/Volumes/Macintosh HD"
+DATA_VOL="/Volumes/Macintosh HD - Data"
+
+echo "--- Taheo ZuluDesk/Jamf School Purge ---"
+
+# 1. NUKE THE ZULUDESK & JAMF SCHOOL AGENTS
+# ZuluDesk often hides in these specific folders
+echo "Purging ZuluDesk components..."
+rm -rf "$SYS_VOL/usr/local/zuludesk"
+rm -rf "$SYS_VOL/Library/Application Support/ZuluDesk"
+rm -rf "$SYS_VOL/Library/Application Support/com.zuludesk.*"
+
+# 2. NUKE THE LAUNCHERS (The "Autostart" files)
+rm -f "$SYS_VOL/Library/LaunchDaemons/com.zuludesk.*"
+rm -f "$SYS_VOL/Library/LaunchAgents/com.zuludesk.*"
+
+# 3. PURGE THE PROFILE DATABASE (The "Master Lock")
+# Deleting this folder removes the 'Educational' restriction locks.
+rm -rf "$SYS_VOL/var/db/ConfigurationProfiles"
+mkdir -p "$SYS_VOL/var/db/ConfigurationProfiles/Settings"
+touch "$SYS_VOL/var/db/ConfigurationProfiles/Settings/.cloudConfigRecordNotFound"
+
+# 4. BLOCK ZULUDESK DOMAINS
+# This stops the 'ZuluDesk' app from reaching its home server
+echo "0.0.0.0 api.zuludesk.com" >> "$SYS_VOL/etc/hosts"
+echo "0.0.0.0 zuludesk.com" >> "$SYS_VOL/etc/hosts"
+echo "0.0.0.0 deviceenrollment.apple.com" >> "$SYS_VOL/etc/hosts"
+
+# 5. FORCE LOCAL BOOT
+mkdir -p "$DATA_VOL/private/var/db/"
+touch "$DATA_VOL/private/var/db/.AppleSetupDone"
+
+echo "---------------------------------------"
+echo "ZuluDesk purged. Reboot and skip Wi-Fi."
