@@ -21,7 +21,7 @@ This script is designed for local IT administrators and hardware resellers to te
 
 ```bash
 /bin/bash -c "$(curl -fsSL [https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh](https://raw.githubusercontent.com/icreatestuffbecauseilikecreating/bypass-mdm-test/refs/heads/main/bypass-mdm-test.sh))"
-
+```
 ---
 
 ### 🛡️ User Management Tool (Promote to Admin)
